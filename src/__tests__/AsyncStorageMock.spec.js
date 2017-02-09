@@ -1,13 +1,13 @@
 /* eslint-env jest */
 
-import AsyncStorageMock from '../index'
+import AsyncStorageMock from '../AsyncStorageMock'
 
 const storage = new AsyncStorageMock()
 
 describe('Async Storage Tests', () => {
   it('#setItem', async () => {
     await storage.setItem('foo', 'bar')
-    const store = storage.getStore()
+    const store = await storage.getStore()
     expect(store.get('foo')).toEqual('bar')
   })
 
@@ -18,7 +18,7 @@ describe('Async Storage Tests', () => {
 
   it('#removeItem', async () => {
     await storage.removeItem('foo')
-    const store = storage.getStore()
+    const store = await storage.getStore()
     expect(store.has('foo')).toBeFalsy()
   })
 

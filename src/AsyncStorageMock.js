@@ -1,6 +1,6 @@
 // @flow
 
-/* global jest Iterable */
+/* global Iterable */
 
 import merge from 'deepmerge'
 
@@ -8,9 +8,9 @@ type Entry<K, V> = [K, V];
 
 type Entries<K, V> = Iterable<Entry<K, V>>;
 
-type ErrBack<V> = (err: ?Error, val: ?V) => {};
+type Err = Error | Array<Error>;
 
-type ArrErrBack<V> = (err: ?Array<Error>, val: ?V) => {};
+type ErrBack<V> = (err: ?Err, val: ?V) => {};
 
 const isStringified = (str: string): boolean => {
   try {
@@ -24,11 +24,11 @@ const isStringified = (str: string): boolean => {
 class AsyncDict<K, V> {
   store: Map<K, V>;
 
-  size (): number {
+  async size (): Promise<number> {
     return this.store.size
   }
 
-  getStore (): Map<K, V> {
+  async getStore (): Promise<Map<K, V>> {
     return new Map(this.store)
   }
 
@@ -102,10 +102,8 @@ class AsyncStorageMock extends AsyncDict<string, string> {
     if (cb) cb(null)
   }
 
-  async multiMerge (entries: Entries<string, string>, cb: ?ArrErrBack<string>): Promise<> {
+  async multiMerge (entries: Entries<string, string>, cb: ?ErrBack<string>): Promise<> {
     const errors: Array<Error> = []
-    /* eslint no-restricted-syntax: "off" */
-    /* eslint no-await-in-loop: "off" */
     for (const [key, value] of entries) {
       try {
         await this.mergeItem(key, value)
@@ -123,12 +121,5 @@ class AsyncStorageMock extends AsyncDict<string, string> {
     return Promise.resolve()
   }
 }
-
-export const mock = () => {
-  const mockImpl = new AsyncStorageMock()
-  jest.mock('AsyncStorage', () => mockImpl)
-}
-
-export const release = () => jest.unmock('AsyncStorage')
 
 export default AsyncStorageMock
