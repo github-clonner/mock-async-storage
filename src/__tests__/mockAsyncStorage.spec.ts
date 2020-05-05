@@ -1,6 +1,7 @@
 /* eslint-env jest */
 
 import MockAsyncStorage from '../index'
+import { Entries } from '../mockAsyncStorage'
 
 const storage = new MockAsyncStorage()
 
@@ -14,6 +15,11 @@ describe('Async Storage Tests', () => {
   it('#getItem', async () => {
     const foo = await storage.getItem('foo')
     expect(foo).toEqual('bar')
+  })
+
+  it('#getItem returns null if item not in store', async () => {
+    const foo = await storage.getItem('baz')
+    expect(foo).toEqual(null)
   })
 
   it('#removeItem', async () => {
@@ -54,7 +60,7 @@ describe('Async Storage Tests', () => {
 
     await storage.setItem('UID123', JSON.stringify(UID123object))
     await storage.mergeItem('UID123', JSON.stringify(UID123delta))
-    const merged = await storage.getItem('UID123')
+    const merged = await storage.getItem('UID123') || ''
 
     expect(JSON.parse(merged)).toEqual({
       name: 'Chris',
@@ -116,10 +122,10 @@ describe('Async Storage Tests', () => {
 
   it('#multiGet and the callback', async () => {
     const cb = jest.fn()
-    const values = await storage.multiGet(['foo', 'bar'], cb)
+    const values = await storage.multiGet(['foo', 'bar', 'baz'], cb)
 
-    expect(values).toEqual([['foo', 'foo'], ['bar', 'bar']])
-    expect(cb).toBeCalledWith(null, [['foo', 'foo'], ['bar', 'bar']])
+    expect(values).toEqual([['foo', 'foo'], ['bar', 'bar'], ['baz', null]])
+    expect(cb).toBeCalledWith(null, [['foo', 'foo'], ['bar', 'bar'], ['baz', null]])
   })
 
   it('#multiSet and the callback', async () => {
@@ -172,8 +178,8 @@ describe('Async Storage Tests', () => {
       traits: { eyes: 'green', shoe_size: 6 }
     }
 
-    const multiSetPairs = [['UID234', JSON.stringify(UID234object)], ['UID345', JSON.stringify(UID345object)]]
-    const multiMergePairs = [['UID234', JSON.stringify(UID234delta)], ['UID345', JSON.stringify(UID345delta)]]
+    const multiSetPairs: Entries<string, string> = [['UID234', JSON.stringify(UID234object)], ['UID345', JSON.stringify(UID345object)]]
+    const multiMergePairs: Entries<string, string> = [['UID234', JSON.stringify(UID234delta)], ['UID345', JSON.stringify(UID345delta)]]
 
     await storage.clear()
     await storage.multiSet(multiSetPairs)
@@ -181,8 +187,8 @@ describe('Async Storage Tests', () => {
 
     const items = await storage.multiGet(['UID234', 'UID345'])
 
-    expect(JSON.parse(items[0][1])).toEqual({ name: 'Chris', age: 31, traits: { shoe_size: 10, hair: 'brown', eyes: 'blue' } })
-    expect(JSON.parse(items[1][1])).toEqual({ name: 'Marge', age: 26, traits: { shoe_size: 6, hair: 'blonde', eyes: 'green' } })
+    expect(JSON.parse(items[0][1] || '')).toEqual({ name: 'Chris', age: 31, traits: { shoe_size: 10, hair: 'brown', eyes: 'blue' } })
+    expect(JSON.parse(items[1][1] || '')).toEqual({ name: 'Marge', age: 26, traits: { shoe_size: 6, hair: 'blonde', eyes: 'green' } })
     expect(cb).toBeCalledWith(null)
   })
 })
